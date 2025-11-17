@@ -1,5 +1,6 @@
 from ghapi.all import GhApi
 from custom_parser import do_time,do_fastcore_decode,parse_attributes,check_env_vars
+import re
 import json
 import logging
 import os
@@ -12,6 +13,7 @@ from otel import otel_logger,otel_tracer,otel_meter,create_otel_attributes
 import requests
 import zipfile
 import dateutil.parser as dp
+import log_parser
 
 # Check if compulsory env variables are configured
 check_env_vars()
@@ -37,6 +39,7 @@ GITHUB_REPOSITORY_OWNER=os.getenv('GITHUB_REPOSITORY_OWNER')
 
 EXPORTER_JOB_NAME=os.getenv('GITHUB_JOB').lower()
 
+
 # Check if debug is set
 if "GITHUB_DEBUG" in os.environ and os.getenv('GITHUB_DEBUG').lower() == "true":
     print("Running on DEBUG mode")
@@ -46,6 +49,8 @@ if "GITHUB_DEBUG" in os.environ and os.getenv('GITHUB_DEBUG').lower() == "true":
     logging.getLogger().setLevel(logging.DEBUG)
 else:
     pass
+
+OTEL_EXPORTER_LOG_PATTERNS = log_parser.compile_patterns(os.getenv('OTEL_EXPORTER_LOG_PATTERNS'))
 
 if OTLP_PROTOCOL in (None, ''):
     OTLP_PROTOCOL = "HTTP"
@@ -147,7 +152,7 @@ with zipfile.ZipFile("log.zip", 'r') as zip_ref:
 # Jobs trace span
 # Set Jobs tracer and logger
 pcontext = trace.set_span_in_context(p_parent)
-for job in job_lst:
+for job_index,job in enumerate(job_lst):
     try:
         print("Processing job ->",job['name'])
         child_0_attributes = create_otel_attributes(parse_attributes(job,"steps","job"),GITHUB_REPOSITORY_NAME)
@@ -162,6 +167,16 @@ for job in job_lst:
             successful_job_counter.add(1)
         else:
             failed_job_counter.add(1)
+        
+        # Parse additional attributes from logs
+        if OTEL_EXPORTER_LOG_PATTERNS:
+            job_number = len(job_lst) - job_index - 1 # for some reason the order is reversed
+            try:
+                with open ("./logs/"+str(job_number)+"_"+str(job['name'].replace("/",""))+".txt") as f:
+                    child_0_attributes.update(log_parser.parse_attributes_from_log(f, OTEL_EXPORTER_LOG_PATTERNS))
+            except Exception as e:
+                print("Error parsing additional attributes from logs for job ->",job['name'],"<- due to error",e)
+
 
         # Steps trace span
         for index,step in enumerate(job['steps']):

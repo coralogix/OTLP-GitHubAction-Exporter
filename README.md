@@ -2,7 +2,7 @@
 
 A GitHub Action to export Workflow runs as OTel Traces, Metric and Logs via OTLP.
 
-Forked from [StephenGoodall/OTLP-GitHubAction-Exporter](https://github.com/StephenGoodall/OTLP-GitHubAction-Exporter) in order to develop and maintain it as a core part of GitHub Actions Coralogix Integration.
+Forked from [coralogix/OTLP-GitHubAction-Exporter](https://github.com/coralogix/OTLP-GitHubAction-Exporter) in order to add additional functionality.
 
 ## Monitoring Github Actions with OTLP
 
@@ -52,7 +52,7 @@ This means it will run whenever any of your other workflows complete - which mea
 
 `OTLP_PROTOCOL` - This determines the protocol to use for the Exporters (HTTP or GRPC) - Defaults to HTTP
 
-`OTEL_EXPORTER_OTLP_HEADERS` - Technically optional, however Coralogix will need this for the Authorization. This can be used to set the Headers for the OTLP Exporter (Authorization: Bearer cxtp_......). Enter these in a commas separated, key=value format. See [OpenTelemetry Docs](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/#otel_exporter_otlp_headers)
+`OTEL_EXPORTER_OTLP_HEADERS` - Technically optional, however Coralogix will need this for the Authorization. This can be used to set the Headers for the OTLP Exporter (Authorization: Bearer cxtp\_......). Enter these in a commas separated, key=value format. See [OpenTelemetry Docs](https://opentelemetry.io/docs/languages/sdk-configuration/otlp-exporter/#otel_exporter_otlp_headers)
 
 `GITHUB_DEBUG` - see [Troubleshooting](#Troubleshooting)
 
@@ -69,14 +69,14 @@ Logs will be available in the Logs console with few attributes that you can use 
 
 Metrics will be available in the Metrics console. There are 3 metrics available:
 
-* `github_workflow_failed_job_count_total`
-* `github_workflow_overall_job_count_total`
-* `github_workflow_successful_job_count_total`.
+- `github_workflow_failed_job_count_total`
+- `github_workflow_overall_job_count_total`
+- `github_workflow_successful_job_count_total`.
 
 All those metrics contain the service name (i.e. repository name) label.
 ![Metrics](images/Metrics.png)
 
-## Troubleshooting 
+## Troubleshooting
 
 - Configure `GITHUB_DEBUG` as true in your workflow file
 
