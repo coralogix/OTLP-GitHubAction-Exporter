@@ -144,6 +144,13 @@ with open("log.zip",'wb') as output_file:
 with zipfile.ZipFile("log.zip", 'r') as zip_ref:
     zip_ref.extractall("./logs")
 
+
+def _log_path_for_step(logs_dir: str, job_name: str, step_number: int, step_name: str, sanitize_slashes: bool = False) -> str:
+    """Build log file path. If sanitize_slashes, replace '/' with '_' (GitHub zip may sanitize names)."""
+    j = str(job_name).replace("/", "_") if sanitize_slashes else str(job_name)
+    s = str(step_name).replace("/", "_") if sanitize_slashes else str(step_name)
+    return f"{logs_dir}{j}/{step_number}_{s}.txt"
+
 # Jobs trace span
 # Set Jobs tracer and logger
 pcontext = trace.set_span_in_context(p_parent)
@@ -200,9 +207,18 @@ for job in job_lst:
                 with trace.use_span(child_1, end_on_exit=False):
                     # Parse logs
                     try:
-                        # Use exact job and step names from API; GitHub's zip uses them verbatim for folder/file names (see case 2777)
-                        log_path = "./logs/"+str(job["name"])+"/"+str(step['number'])+"_"+str(step['name'])+".txt"
-                        with open (log_path) as f:
+                        # Try exact API names first; then try with '/' replaced by '_' (GitHub zip may sanitize names)
+                        log_path = None
+                        for sanitize in (False, True):
+                            candidate = _log_path_for_step("./logs/", job["name"], step['number'], step['name'], sanitize_slashes=sanitize)
+                            if os.path.isfile(candidate):
+                                log_path = candidate
+                                break
+                        if log_path is None:
+                            raise FileNotFoundError(
+                                _log_path_for_step("", job["name"], step['number'], step['name'], sanitize_slashes=False).lstrip("/")
+                            )
+                        with open(log_path) as f:
                             for line in f.readlines():
                                 try:
                                     line_to_add = line[29:-1].strip()
