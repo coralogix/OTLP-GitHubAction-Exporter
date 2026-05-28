@@ -56,6 +56,18 @@ This means it will run whenever any of your other workflows complete - which mea
 
 `GITHUB_DEBUG` - see [Troubleshooting](#Troubleshooting)
 
+`OTEL_TRACES_EXPORTER` / `OTEL_METRICS_EXPORTER` / `OTEL_LOGS_EXPORTER` - Per-signal on/off switches following the [OpenTelemetry SDK exporter spec](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/). A signal is **disabled** only when its variable is set to `none` (case-insensitive). Any other value — unset, empty, `otlp`, etc. — leaves the signal **enabled**. By default all three are unset, so all signals are exported (unchanged behavior). When a signal is disabled, no exporter is created and no data is sent for it. Note: only `none` is special-cased to disable; any other value is treated as OTLP (other exporter types such as `console` are not supported).
+
+#### Example: traces only
+
+To export spans but no metrics or logs:
+
+\```yaml
+env:
+  OTEL_METRICS_EXPORTER: none
+  OTEL_LOGS_EXPORTER: none
+\```
+
 ## Examples
 
 Traces are viewable in the Tracing console within Coralogix. The service name will be your repository name:
