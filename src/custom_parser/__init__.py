@@ -35,6 +35,18 @@ def check_env_vars():
             print(key + " not set")
         exit(1)
 
+def signal_enabled(var_value):
+    """Decide whether an OTel signal is enabled from its standard exporter selection var.
+
+    Follows the OpenTelemetry spec for OTEL_{TRACES,METRICS,LOGS}_EXPORTER: a signal is
+    disabled only when the var is set to "none" (case-insensitive, trimmed). Every other
+    value -- unset, empty, "otlp", or anything else -- leaves the signal enabled, which
+    keeps the default behavior (all three signals on) unchanged.
+    """
+    if var_value is None:
+        return True
+    return var_value.strip().lower() != "none"
+
 def parse_attributes(obj,att_to_drop,otype):
     obj_atts = {}
     attributes_to_drop = []

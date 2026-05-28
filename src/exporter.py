@@ -1,5 +1,5 @@
 from ghapi.all import GhApi
-from custom_parser import do_time,do_fastcore_decode,parse_attributes,check_env_vars
+from custom_parser import do_time,do_fastcore_decode,parse_attributes,check_env_vars,signal_enabled
 import json
 import logging
 import os
@@ -37,9 +37,19 @@ GITHUB_REPOSITORY_OWNER=os.getenv('GITHUB_REPOSITORY_OWNER')
 
 EXPORTER_JOB_NAME=os.getenv('GITHUB_JOB').lower()
 
+# Per-signal selection via the standard OTel SDK exporter vars.
+# A signal is disabled only when its var is set to "none" (case-insensitive, trimmed);
+# unset/empty/"otlp"/anything else leaves it enabled, so the default is all three on.
+TRACES_ENABLED = signal_enabled(os.getenv('OTEL_TRACES_EXPORTER'))
+METRICS_ENABLED = signal_enabled(os.getenv('OTEL_METRICS_EXPORTER'))
+LOGS_ENABLED = signal_enabled(os.getenv('OTEL_LOGS_EXPORTER'))
+
 # Check if debug is set
 if "GITHUB_DEBUG" in os.environ and os.getenv('GITHUB_DEBUG').lower() == "true":
     print("Running on DEBUG mode")
+    print(f"Signal selection -> traces: {'enabled' if TRACES_ENABLED else 'disabled'}, "
+          f"metrics: {'enabled' if METRICS_ENABLED else 'disabled'}, "
+          f"logs: {'enabled' if LOGS_ENABLED else 'disabled'}")
     import http.client as http_client
     http_client.HTTPConnection.debuglevel = 1
     LoggingInstrumentor().instrument(set_logging_format=True,log_level=logging.DEBUG)
@@ -95,8 +105,8 @@ if GITHUB_CUSTOM_ATTS != "":
 
 # Set workflow level tracer. meter and logger
 global_resource = Resource(attributes=global_attributes)
-tracer = otel_tracer(OTEL_EXPORTER_OTLP_ENDPOINT, headers, global_resource, "tracer", OTLP_PROTOCOL)
-meter = otel_meter(OTEL_EXPORTER_OTLP_ENDPOINT, headers, global_resource, "meter", OTLP_PROTOCOL)
+tracer = otel_tracer(OTEL_EXPORTER_OTLP_ENDPOINT, headers, global_resource, "tracer", OTLP_PROTOCOL, enabled=TRACES_ENABLED)
+meter = otel_meter(OTEL_EXPORTER_OTLP_ENDPOINT, headers, global_resource, "meter", OTLP_PROTOCOL, enabled=METRICS_ENABLED)
 
 # Ensure we don't export data for the OTLP_GitHubAction-Exporter job
 workflow_run = json.loads(get_workflow_run_jobs_by_run_id)
@@ -185,12 +195,12 @@ for job in job_lst:
                         pass
                 resource_log = Resource(attributes=resource_attributes)
                 
-                step_tracer = otel_tracer(OTEL_EXPORTER_OTLP_ENDPOINT, headers, resource_log, "step_tracer", OTLP_PROTOCOL)
+                step_tracer = otel_tracer(OTEL_EXPORTER_OTLP_ENDPOINT, headers, resource_log, "step_tracer", OTLP_PROTOCOL, enabled=TRACES_ENABLED)
                 
                 resource_attributes[cicd_semconv.CICD_PIPELINE_TASK_NAME.replace("pipeline.task", "pipeline.task.step")] = step['name']
                 resource_attributes.update(create_otel_attributes(parse_attributes(step,"","step"),GITHUB_REPOSITORY_NAME))
                 resource_log = Resource(attributes=resource_attributes)
-                job_logger = otel_logger(OTEL_EXPORTER_OTLP_ENDPOINT,headers,resource_log, "job_logger", OTLP_PROTOCOL)
+                job_logger = otel_logger(OTEL_EXPORTER_OTLP_ENDPOINT,headers,resource_log, "job_logger", OTLP_PROTOCOL, enabled=LOGS_ENABLED)
 
                 if step['conclusion'] == 'skipped' or step['conclusion'] == 'cancelled':
                     if index >= 1:  
