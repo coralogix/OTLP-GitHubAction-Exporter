@@ -20,7 +20,7 @@ env:
   OTEL_EXPORTER_OTLP_HEADERS: Authorization=Bearer ${{ secrets.CORALOGIX_API_KEY }}
   GITHUB_CUSTOM_ATTS: '{"cx.application.name":"github", "cx.subsystem.name":"actions"}'
   # You can override service.name or make subsystem dynamic
-  # GITHUB_CUSTOM_ATTS: '{"service.name":"ghapp", "cx.application.name":"ghactions", "cx.subsystem.name":${{ github.repository }}}'
+  # GITHUB_CUSTOM_ATTS: '{"service.name":"ghapp", "cx.application.name":"ghactions", "cx.subsystem.name":"${{ github.repository }}"}'
 
 jobs:
   Coralogix-GitHubAction-Exporter:
