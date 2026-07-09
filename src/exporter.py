@@ -64,7 +64,7 @@ if OTEL_EXPORTER_OTLP_HEADERS:
             headers[key] = value
 
 # Github API client
-api = GhApi(owner=GITHUB_REPOSITORY_OWNER, repo=GITHUB_REPOSITORY_NAME.split('/')[1], token=str(ACTION_TOKEN))
+api = GhApi(owner=GITHUB_REPOSITORY_OWNER, repo=GITHUB_REPOSITORY_NAME.split('/')[1], token=str(ACTION_TOKEN), sync=True)
 
 # Github API calls
 get_workflow_run_by_run_id = do_fastcore_decode(api.actions.get_workflow_run(WORKFLOW_RUN_ID))

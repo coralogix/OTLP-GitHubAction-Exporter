@@ -1,5 +1,9 @@
 # Changelog
 
+## 3.4.0 (2026-07-09)
+
+* [feat] Upgrade to ghapi 2.x using sync client mode
+
 ## 3.3.2 (2026-07-09)
 
 * [fix] Pin ghapi below 2.0.0 to avoid breaking async API change
