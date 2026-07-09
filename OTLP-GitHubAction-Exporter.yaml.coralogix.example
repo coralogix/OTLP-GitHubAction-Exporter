@@ -18,9 +18,13 @@ env:
   # Change to your region's endpoint (https://coralogix.com/docs/integrations/coralogix-endpoints/)
   OTEL_EXPORTER_OTLP_ENDPOINT: https://ingress.eu2.coralogix.com/ 
   OTEL_EXPORTER_OTLP_HEADERS: Authorization=Bearer ${{ secrets.CORALOGIX_API_KEY }}
+  # Per-signal selection (OpenTelemetry standard vars). Set to "none" to disable a signal
+  # OTEL_TRACES_EXPORTER: none
+  # OTEL_METRICS_EXPORTER: none
+  # OTEL_LOGS_EXPORTER: none
   GITHUB_CUSTOM_ATTS: '{"cx.application.name":"github", "cx.subsystem.name":"actions"}'
   # You can override service.name or make subsystem dynamic
-  # GITHUB_CUSTOM_ATTS: '{"service.name":"ghapp", "cx.application.name":"ghactions", "cx.subsystem.name":${{ github.repository }}}'
+  # GITHUB_CUSTOM_ATTS: '{"service.name":"ghapp", "cx.application.name":"ghactions", "cx.subsystem.name":"${{ github.repository }}"}'
 
 jobs:
   Coralogix-GitHubAction-Exporter:

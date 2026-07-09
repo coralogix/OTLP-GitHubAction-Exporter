@@ -70,10 +70,15 @@ def create_otel_attributes(atts, GITHUB_SERVICE_NAME):
             attributes[att]=atts[att]
     return attributes
 
-def otel_logger(endpoint, headers, resource, name, export_protocol):
-    exporter = getLogExporter(endpoint=f"{endpoint}v1/logs",headers=headers, protocol=export_protocol )
+def otel_logger(endpoint, headers, resource, name, export_protocol, enabled=True):
     logger = logging.getLogger(str(name))
     logger.handlers.clear()
+    if not enabled:
+        # No OTLP LoggingHandler: log records emitted on this logger are dropped.
+        # The NullHandler keeps disabled lines from falling through to the root logger/stdout.
+        logger.addHandler(logging.NullHandler())
+        return logger
+    exporter = getLogExporter(endpoint=f"{endpoint}v1/logs",headers=headers, protocol=export_protocol )
     logger_provider = LoggerProvider(resource=resource)
     logger_provider.add_log_record_processor(BatchLogRecordProcessor(exporter))
     handler = LoggingHandler(level=logging.NOTSET, logger_provider=logger_provider)
@@ -81,7 +86,11 @@ def otel_logger(endpoint, headers, resource, name, export_protocol):
     return logger
 
 
-def otel_tracer(endpoint, headers, resource, tracer, export_protocol):
+def otel_tracer(endpoint, headers, resource, tracer, export_protocol, enabled=True):
+    if not enabled:
+        # No SDK provider installed: returns the API default no-op tracer.
+        # start_span/set_status/end on its spans are harmless no-ops.
+        return trace.get_tracer(__name__)
     processor = BatchSpanProcessor(getSpanExporter(endpoint=f"{endpoint}v1/traces",headers=headers, protocol=export_protocol ))
     tracer = TracerProvider(resource=resource)
     tracer.add_span_processor(processor)
@@ -89,7 +98,11 @@ def otel_tracer(endpoint, headers, resource, tracer, export_protocol):
 
     return tracer
 
-def otel_meter(endpoint, headers, resource, meter, export_protocol):
+def otel_meter(endpoint, headers, resource, meter, export_protocol, enabled=True):
+    if not enabled:
+        # No SDK provider installed: returns the API default no-op meter.
+        # create_counter(...).add(...) on it is a harmless no-op.
+        return metrics.get_meter(__name__)
     reader = PeriodicExportingMetricReader(getMetricExporter(endpoint=f"{endpoint}v1/metrics",headers=headers, protocol=export_protocol ))
     provider = MeterProvider(resource=resource, metric_readers=[reader])
     meter = metrics.get_meter(__name__,meter_provider=provider)

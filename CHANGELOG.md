@@ -2,7 +2,10 @@
 
 ## 3.4.0 (2026-07-09)
 
-* [feat] Upgrade to ghapi 2.x using sync client mode
+* [feat] Upgrade to ghapi 2.x using sync client mode ([#9](https://github.com/coralogix/OTLP-GitHubAction-Exporter/pull/9), thanks @g-sponda)
+* [feat] Allow disabling traces, metrics, or logs independently via `OTEL_*_EXPORTER=none` ([#6](https://github.com/coralogix/OTLP-GitHubAction-Exporter/pull/6), thanks @dzaman)
+* [feat] Emit histogram metrics for workflow, job, and step duration ([#8](https://github.com/coralogix/OTLP-GitHubAction-Exporter/pull/8), thanks @julesverned)
+* [fix] Quote `github.repository` in example `GITHUB_CUSTOM_ATTS` JSON ([#7](https://github.com/coralogix/OTLP-GitHubAction-Exporter/pull/7), thanks @julesverned)
 
 ## 3.3.2 (2026-07-09)
 

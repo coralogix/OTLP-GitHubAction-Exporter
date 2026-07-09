@@ -56,6 +56,18 @@ This means it will run whenever any of your other workflows complete - which mea
 
 `GITHUB_DEBUG` - see [Troubleshooting](#Troubleshooting)
 
+`OTEL_TRACES_EXPORTER` / `OTEL_METRICS_EXPORTER` / `OTEL_LOGS_EXPORTER` - Per-signal on/off switches following the [OpenTelemetry SDK exporter spec](https://opentelemetry.io/docs/specs/otel/configuration/sdk-environment-variables/). A signal is **disabled** only when its variable is set to `none` (case-insensitive). Any other value — unset, empty, `otlp`, etc. — leaves the signal **enabled**. By default all three are unset, so all signals are exported (unchanged behavior). When a signal is disabled, no exporter is created and no data is sent for it. Note: only `none` is special-cased to disable; any other value is treated as OTLP (other exporter types such as `console` are not supported).
+
+#### Example: traces only
+
+To export spans but no metrics or logs:
+
+```
+env:
+  OTEL_METRICS_EXPORTER: none
+  OTEL_LOGS_EXPORTER: none
+```
+
 ## Examples
 
 Traces are viewable in the Tracing console within Coralogix. The service name will be your repository name:
@@ -67,11 +79,17 @@ Each trace can be opened to show the steps in context:
 Logs will be available in the Logs console with few attributes that you can use as panel columns. Also, you have an option to use them for filtering.
 ![Logs](images/Logs.png)
 
-Metrics will be available in the Metrics console. There are 3 metrics available:
+Metrics will be available in the Metrics console. Counter metrics available:
 
 * `github_workflow_failed_job_count_total`
 * `github_workflow_overall_job_count_total`
-* `github_workflow_successful_job_count_total`.
+* `github_workflow_successful_job_count_total`
+
+Histogram metrics for duration analysis (p95, rate, etc.):
+
+* `github_workflow_run_duration_seconds_{count,sum,bucket}`
+* `github_workflow_job_duration_seconds_{count,sum,bucket}`
+* `github_workflow_step_duration_seconds_{count,sum,bucket}`
 
 All those metrics contain the service name (i.e. repository name) label.
 ![Metrics](images/Metrics.png)
